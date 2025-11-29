@@ -8,8 +8,8 @@ This project tests whether model interpretability can be validated instead of si
 ## 1. Create and activate virtual environment
 `
 python3 -m venv venv`
-`
 
+`
 source venv/bin/activate # for linux`
 
 `
