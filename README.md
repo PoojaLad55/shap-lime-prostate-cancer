@@ -8,7 +8,9 @@ This project tests whether model interpretability can be validated instead of si
 ## 1. Create and activate virtual environment
 `
 python3 -m venv venv
-source venv/bin/activate
+
+source venv/bin/activate # for linux
+
 venv\Scripts\activate  
 `
 ## 2. Install dependencies
@@ -23,14 +25,15 @@ python3 train_model.py
 `
 ## 4. Generate SHAP and LIME explanations
 Outputs include: (1) shap_importance.csv, (2) lime_importance.csv, (3) Top-genes bar plots.
+
 `
-python scripts/explain_shap_lime.py
+python explain_shap_lime.py
 `
 ## 5. Compare SHAP vs LIME and run pathway enrichment
 Outputs include: (1) sSpearman and Jaccard stability scores, (2) Overlapping consensus gene list.csv, (3) KEGG/GO enrichment tables.
 
 `
-python scripts/pathway_enrichment.py
+python pathway_enrichment.py
 `
 
 
