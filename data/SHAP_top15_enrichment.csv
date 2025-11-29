@@ -1,0 +1,3 @@
+source,native,name,p_value,significant,description,term_size,query_size,intersection_size,effective_domain_size,precision,recall,query,parents
+GO:MF,GO:0046332,SMAD binding,0.0065502225621365635,True,"""Binding to a SMAD signaling protein."" [GOC:ai]",79,15,3,20246,0.2,0.0379746835443038,query_1,['GO:0005515']
+GO:BP,GO:0044057,regulation of system process,0.040306166431292145,True,"""Any process that modulates the frequency, rate or extent of a system process, a multicellular organismal process carried out by any of the organs or tissues in an organ system."" [GOC:jl]",553,15,5,21026,0.3333333333333333,0.009041591320072333,query_1,"['GO:0003008', 'GO:0051239']"
