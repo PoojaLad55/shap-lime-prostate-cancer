@@ -7,8 +7,8 @@ This project tests whether model interpretability can be validated instead of si
 # How to Run
 ## 1. Create and activate virtual environment
 `
-python3 -m venv venv
-source venv/bin/activate          # macOS/Linux
+python3 -m venv venv \n
+source venv/bin/activate # macOS/Linux \n
 venv\Scripts\activate  
 `
 ## 2. Install dependencies
