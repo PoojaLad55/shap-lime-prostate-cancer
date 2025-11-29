@@ -1,73 +1,88 @@
-import pandas as pd
 import numpy as np
 import os
-from sklearn.model_selection import train_test_split
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
+import matplotlib
 import seaborn as sns
 import matplotlib.pyplot as plt
-
-# file paths
-data_dir = "../data"
-clean_file = os.path.join(data_dir, "GSE183019_TPM_47genes_clean.csv")
-raw = pd.read_csv(clean_file, header=None)
-
-# fix headers and labels from your CSV structure
-df = raw.iloc[3:, :]                     # data starts after the 3rd row
-df.columns = raw.iloc[0, :]              # gene symbols as columns
-labels = raw.iloc[1, 1:].values          # second row has "Normal"/"Tumor"
-
-# drop non-numeric description column if present
-df = df.drop(columns=["DESCRIPTION"], errors='ignore')
-
-# set gene names as index and convert everything to numeric
-df = df.set_index(df.columns[0])
-df = df.apply(pd.to_numeric, errors='coerce')
-
-# transpose so each row = sample, each column = gene
-df = df.T
-
-# create label vector (0 = Normal, 1 = Tumor)
-y = pd.Series(labels, name="Label").map({'Normal': 0, 'Tumor': 1}).astype(int)
-y = y.iloc[:len(df)]  # align in case of mismatch
-
-print(f"Loaded data: {df.shape}")
-print(f"Labels: {y.value_counts().to_dict()}")
-
-# split data
-X_train, X_test, y_train, y_test = train_test_split(
-    df, y, test_size=0.2, random_state=42, stratify=y
+from sklearn.model_selection import train_test_split
+from sklearn.impute import SimpleImputer
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import (
+    classification_report,
+    confusion_matrix,
+    roc_auc_score,
 )
-print(f"\nTrain set: {X_train.shape}, Test set: {X_test.shape}")
+from load_gse183019 import X, y
 
-# train model
-rf = RandomForestClassifier(n_estimators=200, random_state=42)
-rf.fit(X_train, y_train)
+matplotlib.use("Agg")   
+RANDOM_STATE = 42
+os.makedirs("../plots", exist_ok=True)
 
-# evaluate model
-y_pred = rf.predict(X_test)
-acc = accuracy_score(y_test, y_pred)
-print(f"\nAccuracy: {acc:.3f}")
-print("\nClassification report:\n", classification_report(y_test, y_pred))
+print(f"X shape: {X.shape}")
+print(f"y shape: {y.shape}")
+print("Label counts:\n", y.value_counts())
+print("Alignment check:", X.shape[0] == y.shape[0])
 
-# confusion matrix
+# train + test split
+X_train, X_test, y_train, y_test = train_test_split(
+    X,
+    y,
+    test_size=0.25,          # 75% train, 25% test
+    stratify=y,
+    random_state=RANDOM_STATE,
+)
+
+# impute missing values
+imputer = SimpleImputer(strategy="median")
+
+X_train_imp = imputer.fit_transform(X_train)
+X_test_imp = imputer.transform(X_test)
+
+print("\nTOTAL NaNs in training AFTER imputation:", np.isnan(X_train_imp).sum())
+print("TOTAL NaNs in test AFTER imputation:", np.isnan(X_test_imp).sum())
+
+# random Forest with class weights
+
+rf = RandomForestClassifier(
+    n_estimators=500,
+    max_depth=None,
+    min_samples_split=2,
+    min_samples_leaf=1,
+    class_weight="balanced",   # important for tumor class
+    random_state=RANDOM_STATE,
+    n_jobs=-1,
+)
+
+rf.fit(X_train_imp, y_train)
+
+# evaluation
+y_pred = rf.predict(X_test_imp)
+y_proba = rf.predict_proba(X_test_imp)[:, 1]
+
+acc = (y_pred == y_test).mean()
+print(f"\nAccuracy: {acc:.3f}\n")
+
+print(classification_report(y_test, y_pred))
 cm = confusion_matrix(y_test, y_pred)
-sns.heatmap(cm, annot=True, fmt='d', cmap='Blues',
-            xticklabels=['Normal', 'Tumor'],
-            yticklabels=['Normal', 'Tumor'])
-plt.title("Random Forest Confusion Matrix")
-plt.xlabel("Predicted")
-plt.ylabel("True")
-plt.tight_layout()
-plt.show()
 
-# feature importance
-importances = pd.Series(rf.feature_importances_, index=df.columns)
-top_genes = importances.sort_values(ascending=False).head(10)
+try:
+    auc = roc_auc_score(y_test, y_proba)
+    print(f"ROC AUC: {auc:.3f}")
+except ValueError:
+    print("ROC AUC could not be computed")
 
-plt.figure(figsize=(8,5))
-sns.barplot(x=top_genes.values, y=top_genes.index, orient='h')
-plt.title("Top 10 Most Important Genes (Random Forest)")
-plt.xlabel("Importance Score")
+# plot confusion matrix
+plt.figure(figsize=(6,5))
+sns.heatmap(
+    cm,
+    annot=True,
+    fmt="d",
+    cmap="Blues",
+    xticklabels=["Normal", "Tumor"],
+    yticklabels=["Normal", "Tumor"]
+)
+plt.xlabel("Predicted label")
+plt.ylabel("True label")
+plt.title("Confusion Matrix (Random Forest)")
 plt.tight_layout()
-plt.show()
+plt.savefig("../plots/confusion_matrix.png")
+plt.close()
