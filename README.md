@@ -7,8 +7,8 @@ This project tests whether model interpretability can be validated instead of si
 # How to Run
 ## 1. Create and activate virtual environment
 `
-python3 -m venv venv \n
-source venv/bin/activate # macOS/Linux \n
+python3 -m venv venv
+source venv/bin/activate
 venv\Scripts\activate  
 `
 ## 2. Install dependencies
@@ -17,6 +17,7 @@ pip install -r requirements.txt
 ` 
 ## 3. Train the Random Forest model
 This loads the 47-gene csv, imputes missing values, trains the classifier, and outputs evaluation metrics. Outputs include: (1) Confusion matrix plot, (2) Classification metrics, (3) ROC AUC score.
+
 `
 python3 train_model.py
 `
@@ -27,6 +28,7 @@ python scripts/explain_shap_lime.py
 `
 ## 5. Compare SHAP vs LIME and run pathway enrichment
 Outputs include: (1) sSpearman and Jaccard stability scores, (2) Overlapping consensus gene list.csv, (3) KEGG/GO enrichment tables.
+
 `
 python scripts/pathway_enrichment.py
 `
